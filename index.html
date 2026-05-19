@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Gentle Reminder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0B1220, #101827);
+            color: #DCE7FF;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease-in-out;
+            padding: 20px;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 182, 193, 0.15);
+            border-radius: 24px;
+        }
+
+        .star { position: absolute; background: white; border-radius: 50%; opacity: 0.3; }
+        
+        .spawn-text {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .spawn-text.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="starfield" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- Screen 1: Hero -->
+    <div id="screen-hero" class="screen active z-10">
+        <div class="text-center cursor-pointer hover:scale-105 transition-transform" onclick="goTo('screen-typewriter')">
+            <p class="text-xl md:text-2xl font-light mb-6">For someone who’s been working too hard lately.</p>
+            <p class="text-sm opacity-50 animate-pulse uppercase tracking-widest text-pink-200">click to continue</p>
+        </div>
+    </div>
+
+    <!-- Screen 2: Typewriter -->
+    <div id="screen-typewriter" class="screen z-10">
+        <div class="max-w-lg w-full text-center">
+            <div id="typewriter-text" class="text-xl md:text-2xl font-light leading-relaxed h-32"></div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Letter -->
+    <div id="screen-letter" class="screen z-10">
+        <div class="max-w-md w-full glass-card p-8 md:p-10 shadow-2xl space-y-6">
+            <div id="letter-body" class="space-y-4 text-sm md:text-base leading-relaxed text-center">
+                <p class="spawn-text">Hey,</p>
+                <p class="spawn-text">I know you’ve been really busy lately because of SSG and school stuff, so this is just a small reminder to slow down sometimes.</p>
+                <p class="spawn-text">You’re always doing something and helping everyone, but don’t forget that you need rest too.</p>
+                <p class="spawn-text">Eat properly, drink water, and try to sleep early when you can.</p>
+                <p class="spawn-text">Don’t pressure yourself too much, okay Jo?</p>
+                <p class="spawn-text">You’re already doing a great job.</p>
+                <p class="spawn-text">Just wanted to check on you since I know you’ve been tired lately.</p>
+                <p class="spawn-text">Take care always.</p>
+                <p class="spawn-text font-semibold text-pink-300">Yours truly, Imong Jo</p>
+            </div>
+            <button onclick="goTo('screen-interaction')" class="w-full mt-6 py-3 glass-card hover:bg-pink-500/10 transition-all border border-pink-500/20">
+                Check in with Jo 🦫
+            </button>
+        </div>
+    </div>
+
+    <!-- Screen 4: Interaction -->
+    <div id="screen-interaction" class="screen z-10">
+        <div class="absolute top-8 right-8">
+            <button onclick="goTo('screen-ending')" class="text-xs glass-card px-4 py-2 hover:bg-white/10">Next →</button>
+        </div>
+        <div class="grid grid-cols-2 gap-4 max-w-sm w-full">
+            <button onclick="showToast('proud of you btw')" class="p-6 glass-card hover:scale-105 transition-all text-sm">🦫<br>drink water</button>
+            <button onclick="showToast('you’re doing enough')" class="p-6 glass-card hover:scale-105 transition-all text-sm">🦫<br>rest</button>
+            <button onclick="showToast('don’t overwork yourself')" class="p-6 glass-card hover:scale-105 transition-all text-sm">🦫<br>sleep early</button>
+            <button onclick="showToast('take it slow sometimes')" class="p-6 glass-card hover:scale-105 transition-all text-sm">🦫<br>breathe</button>
+        </div>
+    </div>
+
+    <!-- Screen 5: Ending -->
+    <div id="screen-ending" class="screen z-10 text-center">
+        <h2 class="text-4xl mb-4 font-light">That’s all.</h2>
+        <p class="text-xl opacity-80 mb-8">Now go rest.</p>
+        <p class="text-sm opacity-50 italic mb-8">someone’s rooting for you quietly.</p>
+        <button onclick="showSuccess()" class="text-4xl hover:scale-110 transition-transform">🌸</button>
+    </div>
+
+    <script>
+        // Star background
+        const starfield = document.getElementById('starfield');
+        for(let i=0; i<40; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = Math.random() * 3 + 'px';
+            star.style.height = star.style.width;
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            starfield.appendChild(star);
+        }
+
+        function goTo(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(id);
+            target.classList.add('active');
+            
+            if(id === 'screen-typewriter') runTypewriter();
+            if(id === 'screen-letter') runSpawn();
+        }
+
+        async function runTypewriter() {
+            const el = document.getElementById('typewriter-text');
+            const text = "You’ve probably been busy again today.\nSo this is just a small reminder.";
+            el.innerHTML = '';
+            for(let char of text) {
+                if(char === '\n') el.innerHTML += '<br><br>';
+                else el.innerHTML += char;
+                await new Promise(r => setTimeout(r, 30));
+            }
+            setTimeout(() => goTo('screen-letter'), 1500);
+        }
+
+        function runSpawn() {
+            const items = document.querySelectorAll('.spawn-text');
+            items.forEach((item, i) => {
+                setTimeout(() => item.classList.add('visible'), i * 200);
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-10 px-6 py-3 glass-card text-pink-100 animate-bounce';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        function showSuccess() {
+            const notif = document.createElement('div');
+            notif.className = 'fixed top-10 bg-pink-500/20 backdrop-blur-md border border-pink-200/20 px-8 py-4 rounded-full text-white animate-fade-in shadow-xl';
+            notif.innerText = "Reminder successfully delivered.";
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
